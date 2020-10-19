@@ -4,13 +4,14 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.v4.app.FragmentActivity;
-import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
+
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.fragment.app.FragmentActivity;
 
 import java.io.File;
 import java.io.IOException;
@@ -72,17 +73,17 @@ public class ClipImageActivity extends AppCompatActivity implements View.OnClick
         //设置点击事件监听器
         mBtnCancel.setOnClickListener(this);
         mBtnOk.setOnClickListener(this);
-    }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
         mClipViewLayout.setVisibility(View.VISIBLE);
         mClipViewLayout.setClipType(mType);
 
         //设置图片资源
         mClipViewLayout.setImageSrc(getIntent().getData());
+    }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
     }
 
     @Override

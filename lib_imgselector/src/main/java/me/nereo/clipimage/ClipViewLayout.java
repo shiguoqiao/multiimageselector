@@ -1,15 +1,19 @@
 package me.nereo.clipimage;
 
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
 import android.graphics.PointF;
 import android.graphics.Rect;
 import android.graphics.RectF;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.media.ExifInterface;
 import android.net.Uri;
+import android.os.Environment;
 import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.util.DisplayMetrics;
@@ -20,11 +24,16 @@ import android.view.ViewTreeObserver;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 
+import androidx.annotation.NonNull;
+
 import me.nereo.clipimage.util.BitmapUtil;
 import me.nereo.clipimage.util.FileUtil;
 import me.nereo.multi_image_selector.R;
 
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 
 
 /**
@@ -36,7 +45,7 @@ import java.io.IOException;
 public class ClipViewLayout extends RelativeLayout {
 
     private static final String TAG = "ClipViewLayout";
-
+    private final int IMAGE_MAX_SIZE = 1024;
     //裁剪原图
     private ImageView mImageView;
     //裁剪框
@@ -72,18 +81,21 @@ public class ClipViewLayout extends RelativeLayout {
     private int mPreViewW;
     private int mWidthPixels;
     private int mHeightPixels;
-
-
+    private ContentResolver mContentResolver;
+    private Context mContext;
     public ClipViewLayout(Context context) {
         this(context, null);
+        mContext = context;
     }
 
     public ClipViewLayout(Context context, AttributeSet attrs) {
         this(context, attrs, 0);
+        mContext = context;
     }
 
     public ClipViewLayout(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
+        mContext = context;
         init(context, attrs);
     }
 
@@ -123,7 +135,7 @@ public class ClipViewLayout extends RelativeLayout {
         mWidthPixels = displayMetrics.widthPixels;
         mHeightPixels = displayMetrics.heightPixels;
         mPreViewW = (int) (mWidthPixels - mHorizontalPadding * 2);
-
+        mContentResolver = context.getContentResolver();
     }
 
 
@@ -157,7 +169,7 @@ public class ClipViewLayout extends RelativeLayout {
             return;
         }
 
-        int[] imageWidthHeight = BitmapUtil.getImageWidthHeight(path);
+        /*int[] imageWidthHeight = BitmapUtil.getImageWidthHeight(path);
         int w = imageWidthHeight[0];
         int h = imageWidthHeight[1];
 
@@ -171,49 +183,114 @@ public class ClipViewLayout extends RelativeLayout {
         int rotation = getExifOrientation(path); //查询旋转角度
         Matrix m = new Matrix();
         m.setRotate(rotation);
-        bitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), m, true);
+        bitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), m, true);*/
+        Bitmap bitmap = getBitmap(uri, path);
+        Drawable drawable = new BitmapDrawable(getResources(), bitmap);
+        mImageView.setScaleType(ImageView.ScaleType.CENTER);
+        mImageView.setImageDrawable(drawable);
 
         //图片的缩放比
         float scaleX;
         float scaleY;
-        if (bitmap.getWidth() >= bitmap.getHeight()) {//宽图
-            scaleX = (float) mImageView.getWidth() / bitmap.getWidth();
-            //如果高缩放后小于裁剪区域 则将裁剪区域与高的缩放比作为最终的缩放比
+        if (drawable.getIntrinsicWidth() >= drawable.getIntrinsicHeight()) {//宽图
             Rect rect = mClipView.getClipRect();
             //高的最小缩放比
-            mMinScale = rect.height() / (float) bitmap.getHeight();
-            if (scaleX < mMinScale) {
-                scaleX = mMinScale;
-            }
+            mMinScale = rect.height() / (float) drawable.getIntrinsicHeight();
+            scaleX = mMinScale;
         } else {//高图
             //高的缩放比
-            scaleX = (float) mImageView.getHeight() / bitmap.getHeight();
-            //如果宽缩放后小于裁剪区域 则将裁剪区域与宽的缩放比作为最终的缩放比
             Rect rect = mClipView.getClipRect();
             //宽的最小缩放比
-            mMinScale = rect.width() / (float) bitmap.getWidth();
-            if (scaleX < mMinScale) {
-                scaleX = mMinScale;
-            }
+            mMinScale = rect.width() / (float) drawable.getIntrinsicWidth();
+            scaleX = mMinScale;
         }
         scaleY = scaleX;
         // 缩放
         mMatrix.postScale(scaleX, scaleY);
         // 平移,将缩放后的图片平移到imageview的中心
-
-
         //imageView的中心x
         int midX = mImageView.getWidth() / 2;
         //imageView的中心y
         int midY = mImageView.getHeight() / 2;
         //bitmap的中心x
-        int imageMidX = (int) (bitmap.getWidth() * scaleX / 2);
+        int imageMidX = (int) (drawable.getIntrinsicWidth() * scaleX / 2);
         //bitmap的中心y
-        int imageMidY = (int) (bitmap.getHeight() * scaleY / 2);
+        int imageMidY = (int) (drawable.getIntrinsicHeight() * scaleY / 2);
         mMatrix.postTranslate(midX - imageMidX, midY - imageMidY);
         mImageView.setScaleType(ImageView.ScaleType.MATRIX);
         mImageView.setImageMatrix(mMatrix);
-        mImageView.setImageBitmap(bitmap);
+    }
+
+    private Bitmap getBitmap(Uri uri, String filepath) {
+        InputStream in = null;
+        Bitmap returnedBitmap = null;
+        try {
+            in = mContentResolver.openInputStream(uri);
+            //Decode image size
+            BitmapFactory.Options o = new BitmapFactory.Options();
+            o.inJustDecodeBounds = true;
+            BitmapFactory.decodeStream(in, null, o);
+            in.close();
+            int scale = 1;
+            if (o.outHeight > IMAGE_MAX_SIZE || o.outWidth > IMAGE_MAX_SIZE) {
+                scale = (int) Math.pow(2, (int) Math.round(Math.log(IMAGE_MAX_SIZE / (double) Math.max(o.outHeight, o.outWidth)) / Math.log(0.5)));
+            }
+
+            BitmapFactory.Options o2 = new BitmapFactory.Options();
+            o2.inSampleSize = scale;
+            in = mContentResolver.openInputStream(uri);
+            Bitmap bitmap = BitmapFactory.decodeStream(in, null, o2);
+            in.close();
+            returnedBitmap = fixOrientationBugOfProcessedBitmap(bitmap, filepath);
+            return returnedBitmap;
+        } catch (FileNotFoundException e) {
+            Log.d(TAG, "FileNotFoundException");
+        } catch (IOException e) {
+            Log.d(TAG, "IOException");
+        }
+        return null;
+    }
+
+    private Bitmap fixOrientationBugOfProcessedBitmap(Bitmap bitmap, String filepath) {
+        try {
+            if (getCameraPhotoOrientation(mContext, Uri.parse(filepath)) == 0) {
+                return bitmap;
+            } else {
+                Matrix matrix = new Matrix();
+                matrix.postRotate(getCameraPhotoOrientation(mContext, Uri.parse(filepath)));
+                // recreate the new Bitmap and set it back
+                return Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            return null;
+        }
+    }
+
+    public static int getCameraPhotoOrientation(@NonNull Context context, Uri imageUri) {
+        int rotate = 0;
+        try {
+            context.getContentResolver().notifyChange(imageUri, null);
+            ExifInterface exif = new ExifInterface(
+                    imageUri.getPath());
+            int orientation = exif.getAttributeInt(
+                    ExifInterface.TAG_ORIENTATION,
+                    ExifInterface.ORIENTATION_NORMAL);
+            switch (orientation) {
+                case ExifInterface.ORIENTATION_ROTATE_270:
+                    rotate = 270;
+                    break;
+                case ExifInterface.ORIENTATION_ROTATE_180:
+                    rotate = 180;
+                    break;
+                case ExifInterface.ORIENTATION_ROTATE_90:
+                    rotate = 90;
+                    break;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return rotate;
     }
 
     /**
