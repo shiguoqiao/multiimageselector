@@ -354,7 +354,6 @@ public class MultiImageSelectorFragment extends Fragment {
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        Log.i("REQUEST_CAMERA","onActivityResult");
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == REQUEST_CAMERA) {
             if (resultCode == Activity.RESULT_OK) {
@@ -375,14 +374,6 @@ public class MultiImageSelectorFragment extends Fragment {
                         mTmpFile = null;
                     }
                 }
-            }
-        } else if (requestCode == REQ_CLIP_AVATAR) { //剪切图片返回
-            if (resultCode == Activity.RESULT_OK) {
-                final Uri uri = data.getData();
-                if (uri == null) {
-                    return;
-                }
-                mCallback.onClipReturn(uri);
             }
         }
     }
@@ -807,8 +798,6 @@ public class MultiImageSelectorFragment extends Fragment {
         void onImageUnselected(String path);
 
         void onCameraShot(File imageFile);
-
-        void onClipReturn(Uri uri);
     }
 
 

@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Date;
 
 import me.nereo.clipimage.ClipImageActivity;
+import me.nereo.clipimage.fragment.ActivityResultHelper;
 import me.nereo.clipimage.util.FileUtil;
 import me.nereo.multi_image_selector.bean.WaterMarkBean;
 
@@ -36,7 +37,7 @@ import static me.nereo.clipimage.ClipImageActivity.REQ_CLIP_AVATAR;
  * Updated by nereo on 2016/5/18.
  */
 public class MultiImageSelectorActivity extends AppCompatActivity
-        implements MultiImageSelectorFragment.Callback {
+        implements MultiImageSelectorFragment.Callback, ActivityResultHelper.Callback {
 
     // Single choice
     public static final int MODE_SINGLE = 0;
@@ -204,8 +205,8 @@ public class MultiImageSelectorActivity extends AppCompatActivity
     @Override
     public void onSingleImageSelected(String path) {
         boolean isSingleClip = getIntent().getBooleanExtra(EXTRA_SINGLE_CLIP, false);
-        if (isSingleClip) {
-            ClipImageActivity.goToClipActivity(this, Uri.fromFile(new File(path)));
+        if (true) {
+            ClipImageActivity.goToClipActivity(this, Uri.fromFile(new File(path)), this);
         } else {
             Intent data = new Intent();
             resultList.add(path);
@@ -235,8 +236,8 @@ public class MultiImageSelectorActivity extends AppCompatActivity
     public void onCameraShot(File imageFile) {
         if (imageFile != null) {
             boolean isSingleClip = getIntent().getBooleanExtra(EXTRA_SINGLE_CLIP, false);
-            if (isSingleClip) {
-                ClipImageActivity.goToClipActivity(this, Uri.fromFile(imageFile));
+            if (true) {
+                ClipImageActivity.goToClipActivity(this, Uri.fromFile(imageFile), this);
             } else {
                 // notify system the image has change
                 sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.fromFile(imageFile)));// 扫描照片
@@ -252,13 +253,17 @@ public class MultiImageSelectorActivity extends AppCompatActivity
     }
 
     @Override
-    public void onClipReturn(Uri uri) {
+    public void onActivityResult(int resultCode, Intent data) {
+        final Uri uri = data.getData();
+        if (uri == null) {
+            return;
+        }
         String cropImagePath = FileUtil.getRealFilePathFromUri(getApplicationContext(), uri);
 
-        Intent data = new Intent();
+        Intent intent = new Intent();
         resultList.add(cropImagePath);
-        data.putStringArrayListExtra(EXTRA_RESULT, resultList);
-        setResult(RESULT_OK, data);
+        intent.putStringArrayListExtra(EXTRA_RESULT, resultList);
+        setResult(RESULT_OK, intent);
         finish();
     }
 }
