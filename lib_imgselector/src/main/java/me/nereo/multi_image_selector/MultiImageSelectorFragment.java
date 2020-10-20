@@ -58,6 +58,7 @@ import java.util.TimeZone;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import me.nereo.clipimage.util.FileUtil;
 import me.nereo.multi_image_selector.adapter.FolderAdapter;
 import me.nereo.multi_image_selector.adapter.ImageGridAdapter;
 import me.nereo.multi_image_selector.bean.Folder;
@@ -66,6 +67,8 @@ import me.nereo.multi_image_selector.bean.WaterMarkBean;
 import me.nereo.multi_image_selector.utils.Config;
 import me.nereo.multi_image_selector.utils.FileUtils;
 import me.nereo.multi_image_selector.utils.ScreenUtils;
+
+import static me.nereo.clipimage.ClipImageActivity.REQ_CLIP_AVATAR;
 
 /**
  * Multi image selector Fragment
@@ -351,6 +354,7 @@ public class MultiImageSelectorFragment extends Fragment {
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        Log.i("REQUEST_CAMERA","onActivityResult");
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == REQUEST_CAMERA) {
             if (resultCode == Activity.RESULT_OK) {
@@ -371,6 +375,14 @@ public class MultiImageSelectorFragment extends Fragment {
                         mTmpFile = null;
                     }
                 }
+            }
+        } else if (requestCode == REQ_CLIP_AVATAR) { //剪切图片返回
+            if (resultCode == Activity.RESULT_OK) {
+                final Uri uri = data.getData();
+                if (uri == null) {
+                    return;
+                }
+                mCallback.onClipReturn(uri);
             }
         }
     }
@@ -795,6 +807,8 @@ public class MultiImageSelectorFragment extends Fragment {
         void onImageUnselected(String path);
 
         void onCameraShot(File imageFile);
+
+        void onClipReturn(Uri uri);
     }
 
 

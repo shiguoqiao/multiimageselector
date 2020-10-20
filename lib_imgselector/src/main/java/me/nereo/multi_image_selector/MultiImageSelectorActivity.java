@@ -216,44 +216,6 @@ public class MultiImageSelectorActivity extends AppCompatActivity
     }
 
     @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
-        switch (requestCode) {
-            case REQ_CLIP_AVATAR:  //剪切图片返回
-                if (resultCode == RESULT_OK) {
-                    final Uri uri = intent.getData();
-                    if (uri == null) {
-                        return;
-                    }
-                    String cropImagePath = FileUtil.getRealFilePathFromUri(getApplicationContext(), uri);
-                    long fileSize = FileUtil.getFileSize(cropImagePath);
-
-                    Intent data = new Intent();
-                    resultList.add(cropImagePath);
-                    data.putStringArrayListExtra(EXTRA_RESULT, resultList);
-                    setResult(RESULT_OK, data);
-                    finish();
-                    /*Log.i(TAG, "onActivityResult: fileSize =" + fileSize * 1.0f / 1024);
-                    Bitmap bitMap = BitmapFactory.decodeFile(cropImagePath);
-                    mIvAvatar.setImageBitmap(bitMap);
-                    SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss");
-                    String date = simpleDateFormat.format(new Date());
-                    FileUtil.saveBitmapToSDCard(bitMap, "123");
-                    if (type == ClipView.TYPE_ROUND) {
-                        headImage1.setImageBitmap(bitMap);
-                    } else if (type == ClipView.TYPE_RECT) {
-                        headImage2.setImageBitmap(bitMap);
-                    } else if (type == ClipView.TYPE_PALACE) {
-                        headImage3.setImageBitmap(bitMap);
-                    }*/
-                    //此处后面可以将bitMap转为二进制上传后台网络
-                    //......
-
-                }
-                break;
-        }
-    }
-
-    @Override
     public void onImageSelected(String path) {
         if (!resultList.contains(path)) {
             resultList.add(path);
@@ -272,15 +234,31 @@ public class MultiImageSelectorActivity extends AppCompatActivity
     @Override
     public void onCameraShot(File imageFile) {
         if (imageFile != null) {
-            // notify system the image has change
-            sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.fromFile(imageFile)));// 扫描照片
-            Intent data = new Intent();
-            resultList.add(imageFile.getAbsolutePath());
-            data.putStringArrayListExtra(EXTRA_RESULT, resultList);
-            setResult(RESULT_OK, data);
-            finish();
+            boolean isSingleClip = getIntent().getBooleanExtra(EXTRA_SINGLE_CLIP, false);
+            if (isSingleClip) {
+                ClipImageActivity.goToClipActivity(this, Uri.fromFile(imageFile));
+            } else {
+                // notify system the image has change
+                sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.fromFile(imageFile)));// 扫描照片
+                Intent data = new Intent();
+                resultList.add(imageFile.getAbsolutePath());
+                data.putStringArrayListExtra(EXTRA_RESULT, resultList);
+                setResult(RESULT_OK, data);
+                finish();
+            }
         } else {
             Toast.makeText(MultiImageSelectorActivity.this, "拍照失败，请重试", Toast.LENGTH_SHORT).show();
         }
+    }
+
+    @Override
+    public void onClipReturn(Uri uri) {
+        String cropImagePath = FileUtil.getRealFilePathFromUri(getApplicationContext(), uri);
+
+        Intent data = new Intent();
+        resultList.add(cropImagePath);
+        data.putStringArrayListExtra(EXTRA_RESULT, resultList);
+        setResult(RESULT_OK, data);
+        finish();
     }
 }
