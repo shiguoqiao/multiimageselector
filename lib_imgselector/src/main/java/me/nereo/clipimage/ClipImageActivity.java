@@ -16,6 +16,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 
+import me.nereo.clipimage.fragment.ActivityResultHelper;
 import me.nereo.multi_image_selector.R;
 
 /**
@@ -35,10 +36,19 @@ public class ClipImageActivity extends AppCompatActivity implements View.OnClick
 
     private int mType;
 
-    public static void goToClipActivity(FragmentActivity activity, Uri uri) {
+    public static void goToClipActivity(FragmentActivity activity, Uri uri,
+                                        ActivityResultHelper.Callback callback) {
+        if (uri == null) {
+            return;
+        }
+        Intent intent = getClipIntent(activity, uri);
+        ActivityResultHelper.init(activity).startActivityForResult(intent, callback);
+    }
+
+    /*public static void goToClipActivity(FragmentActivity activity, Uri uri) {
         Intent clipIntent = getClipIntent(activity, uri);
         activity.startActivityForResult(clipIntent, REQ_CLIP_AVATAR);
-    }
+    }*/
 
     @NonNull
     public static Intent getClipIntent(FragmentActivity activity, Uri uri) {
