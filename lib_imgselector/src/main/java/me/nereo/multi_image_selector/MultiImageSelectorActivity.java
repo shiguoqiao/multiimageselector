@@ -205,7 +205,7 @@ public class MultiImageSelectorActivity extends AppCompatActivity
     @Override
     public void onSingleImageSelected(String path) {
         boolean isSingleClip = getIntent().getBooleanExtra(EXTRA_SINGLE_CLIP, false);
-        if (true) {
+        if (isSingleClip) {
             ClipImageActivity.goToClipActivity(this, Uri.fromFile(new File(path)), this);
         } else {
             Intent data = new Intent();
@@ -236,7 +236,7 @@ public class MultiImageSelectorActivity extends AppCompatActivity
     public void onCameraShot(File imageFile) {
         if (imageFile != null) {
             boolean isSingleClip = getIntent().getBooleanExtra(EXTRA_SINGLE_CLIP, false);
-            if (true) {
+            if (isSingleClip) {
                 ClipImageActivity.goToClipActivity(this, Uri.fromFile(imageFile), this);
             } else {
                 // notify system the image has change
