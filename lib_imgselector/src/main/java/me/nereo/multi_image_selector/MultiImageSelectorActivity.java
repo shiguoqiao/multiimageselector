@@ -205,7 +205,7 @@ public class MultiImageSelectorActivity extends AppCompatActivity
     @Override
     public void onSingleImageSelected(String path) {
         boolean isSingleClip = getIntent().getBooleanExtra(EXTRA_SINGLE_CLIP, false);
-        if (isSingleClip) {
+        if (true) {
             ClipImageActivity.goToClipActivity(this, Uri.fromFile(new File(path)), this);
         } else {
             Intent data = new Intent();
@@ -236,7 +236,7 @@ public class MultiImageSelectorActivity extends AppCompatActivity
     public void onCameraShot(File imageFile) {
         if (imageFile != null) {
             boolean isSingleClip = getIntent().getBooleanExtra(EXTRA_SINGLE_CLIP, false);
-            if (isSingleClip) {
+            if (true) {
                 ClipImageActivity.goToClipActivity(this, Uri.fromFile(imageFile), this);
             } else {
                 // notify system the image has change
@@ -254,16 +254,18 @@ public class MultiImageSelectorActivity extends AppCompatActivity
 
     @Override
     public void onActivityResult(int resultCode, Intent data) {
-        final Uri uri = data.getData();
-        if (uri == null) {
-            return;
-        }
-        String cropImagePath = FileUtil.getRealFilePathFromUri(getApplicationContext(), uri);
+        if (resultCode == RESULT_OK) {
+            final Uri uri = data.getData();
+            if (uri == null) {
+                return;
+            }
+            String cropImagePath = FileUtil.getRealFilePathFromUri(getApplicationContext(), uri);
 
-        Intent intent = new Intent();
-        resultList.add(cropImagePath);
-        intent.putStringArrayListExtra(EXTRA_RESULT, resultList);
-        setResult(RESULT_OK, intent);
-        finish();
+            Intent intent = new Intent();
+            resultList.add(cropImagePath);
+            intent.putStringArrayListExtra(EXTRA_RESULT, resultList);
+            setResult(RESULT_OK, intent);
+            finish();
+        }
     }
 }
