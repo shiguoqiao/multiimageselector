@@ -166,7 +166,7 @@ public class ClipViewLayout extends RelativeLayout {
             return;
         }
 
-        /*int[] imageWidthHeight = BitmapUtil.getImageWidthHeight(path);
+        int[] imageWidthHeight = BitmapUtil.getImageWidthHeight(path);
         int w = imageWidthHeight[0];
         int h = imageWidthHeight[1];
 
@@ -180,8 +180,9 @@ public class ClipViewLayout extends RelativeLayout {
         int rotation = getExifOrientation(path); //查询旋转角度
         Matrix m = new Matrix();
         m.setRotate(rotation);
-        bitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), m, true);*/
-        Bitmap bitmap = getBitmap(uri, path);
+        bitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), m, true);
+
+        //Bitmap bitmap = getBitmap(uri, path);
         Drawable drawable = new BitmapDrawable(getResources(), bitmap);
         mImageView.setScaleType(ImageView.ScaleType.CENTER);
         mImageView.setImageDrawable(drawable);
